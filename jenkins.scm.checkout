@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_URL = 'https://github.com/shivashankarbukka402/jenkins.git'
+        GIT_BRANCH = 'main'
+        GIT_CREDENTIALS = 'shivashankarbukka402'
+    }
+
+    stages {
+        stage('CHECKOUT') {
+            steps{
+                script {
+                    checkout scmGit(branches: [[name: '*/main']], 
+                    extensions: [],
+                     userRemoteConfigs: [[credentialsId: 'shivashankarbukka402', 
+                        url: 'https://github.com/shivashankarbukka402/jenkins.git']])
+                }
+            }
+        }
+        stage('CHECK') {
+            steps {
+                sh '''
+                   ls -lrt
+                   echo "$GIT_BRANCH"
+                '''
+            }
+        }
+    }
+}
