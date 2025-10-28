@@ -2,27 +2,66 @@ pipeline {
     agent any
 
     environment {
-        GIT_URL = 'git@github.com:shivashankarbukka402/3tire_app.git'
+       GIT_URL = 'git@github.com:shivashankarbukka402/3tire_app.git'
         GIT_BRANCH = 'main'
         GIT_CREDENTIALS = 'shivashankarbukka402'
+        IMAGE_NAME = 'shiva9828/backend'
+        IMAGE_TAG = 'latest'
+        DOCKERFILE_BASE = 'Dockerfile'
+        DOCKER_REGISTRY_CRED_ID = 'docker_token'
+        SONAR_HOST_URL='http://13.204.80.148:9000'
     }
 
-    stages {
+     stages {
         stage('CHECKOUT') {
-            steps{
+            steps {
                 script {
-                    checkout scmGit(branches: [[name: '*/main']], 
-                    extensions: [],
-                     userRemoteConfigs: [[credentialsId: 'shivashankarbukka402', 
-                        url: 'git@github.com:shivashankarbukka402/3tire_app.git']])
+                    gitCheckout(env.GIT_BRANCH, env.GIT_CREDENTIALS, env.GIT_URL)
                 }
             }
         }
-        stage('CHECK') {
+
+        stage('Sonar Code Quality check') {
+            steps {
+                script {
+                    dir('./backend') {
+                        withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                            sh """
+                                sonar-scanner \
+                                  -Dsonar.projectKey=backend \
+                                  -Dsonar.sources=. \
+                                  -Dsonar.host.url=${env.SONAR_HOST_URL} \
+                                  -Dsonar.token=${SONAR_TOKEN}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        stage('Docker Build and Push') {
+            steps {
+                script { 
+                    sh '''
+                        ls -lrt
+                    '''
+                    dir('./backend') {
+                        dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
+                        docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
+                            dockerImage.push() 
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Trivy Scan') {
             steps {
                 sh '''
-                   ls -lrt
-                   echo "$GIT_BRANCH"
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    --format template \
+                    --template '@/home/ubuntu/trivy/trivy_html.tpl' \
+                    --output 'trivy_backend.html' ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
