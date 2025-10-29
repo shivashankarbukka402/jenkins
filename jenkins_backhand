@@ -43,7 +43,7 @@ pipeline {
        stage('Docker Build and Push') {
           steps {
              script { 
-                 dir('backend') {
+                 dir('Backend') {
                       dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", ".")
                       docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
                       dockerImage.push() 
