@@ -9,7 +9,7 @@ pipeline {
         IMAGE_TAG = 'latest'
         DOCKERFILE_BASE = 'Dockerfile'
         DOCKER_REGISTRY_CRED_ID = 'docker_token'
-        SONAR_HOST_URL='http://13.204.80.148:9000'
+        SONAR_HOST_URL='http://43.205.114.49:9000'
     }
 
      stages {
