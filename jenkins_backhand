@@ -44,9 +44,9 @@ pipeline {
           steps {
              script { 
                  dir('Backend') {
-                      dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", ".")
-                      docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
-                      dockerImage.push() 
+                      dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
+                        docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
+                            dockerImage.push()
                       }
                  }
              }
