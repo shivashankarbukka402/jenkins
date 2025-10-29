@@ -40,21 +40,19 @@ pipeline {
                 }
             }
         }
-        stage('Docker Build and Push') {
-            steps {
-                script { 
-                    sh '''
-                        ls -lrt
-                    '''
-                    dir('./backend') {
-                        dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
-                        docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
-                            dockerImage.push() 
-                        }
-                    }
-                }
-            }
-        }
+       stage('Docker Build and Push') {
+          steps {
+             script { 
+                 dir('backend') {
+                      dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", ".")
+                      docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
+                      dockerImage.push() 
+                      }
+                 }
+             }
+          }
+       }
+
 
         stage('Trivy Scan') {
             steps {
