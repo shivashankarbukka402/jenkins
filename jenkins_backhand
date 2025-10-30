@@ -44,11 +44,11 @@ pipeline {
            steps {
                script {
                     dir('Backend') {
-                         docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_REGISTRY_CRED_ID}") {
-                           def app = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
-                           app.push()
-                           }
-                    }
+                            dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
+                            docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
+                            dockerImage.push()
+                            }
+                     }
                 }
             }
         }
