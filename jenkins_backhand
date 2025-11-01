@@ -53,13 +53,33 @@ pipeline {
         }
         stage('Trivy Scan') {
             steps {
-                sh '''
-                    trivy image \
-                    --severity HIGH,CRITICAL \
-                    --format template \
-                    --template '@/home/ubuntu/trivy/trivy_html.tpl' \
-                    --output 'trivy_backend.html' ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                script {
+                    // Clean old reports
+                    sh 'rm -f trivy_backend.html || true'
+                    
+                    // Run Trivy using the built-in HTML template
+                    sh '''
+                        trivy image \
+                        --severity HIGH,CRITICAL \
+                        --format template \
+                        --template "$(trivy conf show --template html)" \
+                        --output trivy_backend.html ${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
+
+        stage('Publish Trivy Report') {
+            steps {
+                // Publish the HTML report in Jenkins
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: '.',
+                    reportFiles: 'trivy_backend.html',
+                    reportName: 'Trivy Vulnerability Report'
+                ])
             }
         }
     }
