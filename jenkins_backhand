@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     environment {
-       GIT_URL = 'git@github.com:shivashankarbukka402/3tire_app.git'
+       GIT_URL = 'https://github.com/shivashankarbukka402/3tire_app.git'
         GIT_BRANCH = 'main'
         GIT_CREDENTIALS = 'shivashankarbukka402'
         IMAGE_NAME = 'shiva9828/backend'
         IMAGE_TAG = 'latest'
         DOCKERFILE_BASE = 'Dockerfile'
         DOCKER_REGISTRY_CRED_ID = 'docker_token'
-        SONAR_HOST_URL='http://43.205.114.49:9000'
+        SONAR_HOST_URL='http://65.1.85.151:9000'
     }
 
      stages {
@@ -22,7 +22,6 @@ pipeline {
                 }
             }
         }
-
         stage('Sonar Code Quality check') {
             steps {
                 script {
@@ -41,30 +40,46 @@ pipeline {
             }
         }
         stage('Docker Build and Push') {
+           steps {
+               script {
+                    dir('Backend') {
+                            dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
+                            docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
+                            dockerImage.push()
+                            }
+                     }
+                }
+            }
+        }
+        stage('Trivy Scan') {
             steps {
-                script { 
+                script {
+                    // Clean old reports
+                    sh 'rm -f trivy_backend.html || true'
+                    
+                    // Run Trivy using the built-in HTML template
                     sh '''
-                        ls -lrt
+                        trivy image \
+                        --severity HIGH,CRITICAL \
+                        --format template \
+                        --template "$(trivy conf show --template html)" \
+                        --output trivy_backend.html ${IMAGE_NAME}:${IMAGE_TAG}
                     '''
-                    dir('./backend') {
-                        dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
-                        docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") { 
-                            dockerImage.push() 
-                        }
-                    }
                 }
             }
         }
 
-        stage('Trivy Scan') {
+        stage('Publish Trivy Report') {
             steps {
-                sh '''
-                    trivy image \
-                    --severity HIGH,CRITICAL \
-                    --format template \
-                    --template '@/home/ubuntu/trivy/trivy_html.tpl' \
-                    --output 'trivy_backend.html' ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                // Publish the HTML report in Jenkins
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: '.',
+                    reportFiles: 'trivy_backend.html',
+                    reportName: 'Trivy Vulnerability Report'
+                ])
             }
         }
     }
