@@ -36,7 +36,7 @@ pipeline {
     stage('Sonar Code Quality check') {
        steps {
           script {
-              dir('./backend') {
+              dir('./3tire_app') {
                   withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                      sh '''
                         /opt/sonar-scanner/bin/sonar-scanner \
