@@ -64,17 +64,20 @@ pipeline {
         }
 
         stage('Trivy Scan') {
-            steps {
-                sh '''
-                    trivy image \
-                        --severity HIGH,CRITICAL \
-                        --format template \
-                        --template "@/home/ubuntu/trivy/trivy_html.tpl" \
-                        --output trivy_backend.html \
-                        ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
-            }
-        }
+          steps {
+             sh '''
+               mkdir -p /var/lib/jenkins/tmp
+               export TMPDIR=/var/lib/jenkins/tmp
+
+                trivy image \
+                  --severity HIGH,CRITICAL \
+                  --format template \
+                  --template "@/home/ubuntu/trivy/trivy_html.tpl" \
+                  --output trivy_backend.html \
+                  ${IMAGE_NAME}:${IMAGE_TAG}
+             '''
+         }
+       }
 
         stage('Deploy K8S') {
             steps {
