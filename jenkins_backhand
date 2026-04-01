@@ -49,8 +49,11 @@ pipeline {
         stage('Docker Build and Push') {
             steps {
                 script {
+                    sh 'pwd'
                     sh 'ls -lrt'
-                    dir('./3tire_app/Backend') {
+                    dir('./Backend') {
+                        sh 'pwd'
+                        sh 'ls -lrt'
                         def dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_BASE} .")
                         docker.withRegistry('', "${DOCKER_REGISTRY_CRED_ID}") {
                             dockerImage.push()
