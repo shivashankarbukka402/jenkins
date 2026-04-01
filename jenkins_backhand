@@ -39,7 +39,6 @@ pipeline {
               dir('./3tire_app') {
                   withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                      sh '''
-                        /opt/sonar-scanner/bin/sonar-scanner \
                         -Dsonar.projectKey=backend \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=$SONAR_HOST_URL \
